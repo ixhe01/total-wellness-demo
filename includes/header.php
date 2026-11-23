@@ -18,7 +18,7 @@ $I18N = [ // textos para JS
 <meta name="description" content="<?= e(t('Total Wellness Clinic in Van Nuys & Encino: aesthetics, IV therapy, medical weight management and primary care under one roof.', 'Total Wellness Clinic en Van Nuys y Encino: estética, terapia IV, control de peso y medicina general en un solo lugar.')) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="<?= $base ?>assets/css/style.css?v=4">
+<link rel="stylesheet" href="<?= $base ?>assets/css/style.css?v=5">
 <script>window.TW_API=<?= json_encode(app_url('api.php')) ?>;window.TW_LANG=<?= json_encode($L) ?>;window.TW_T=<?= json_encode($I18N) ?>;</script>
 <style>:root{--logo:url("<?= e(img('logo_light', 700)) ?>")}</style>
 </head>

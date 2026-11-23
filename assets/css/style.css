@@ -12,6 +12,7 @@
   --wrap:1220px; --hh:84px;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{scroll-behavior:smooth;scroll-padding-top:110px}
 body{margin:0;font:400 17px/1.7 var(--sans);color:var(--ink-2);background:var(--ivory);-webkit-font-smoothing:antialiased}
 img{max-width:100%;display:block}
