@@ -1,0 +1,10 @@
+---
+deployment:
+  tasks:
+    - export APP=/home4/cucuruch/totalwellness.contentfactoryla.com/
+    - export PAGE=/home4/cucuruch/contentfactoryla.com/total-wellness/
+    - /bin/mkdir -p $APP $PAGE
+    - /bin/cp -R index.php book.php api.php admin includes assets img data $APP
+    - /bin/cp -R index.php includes assets img $PAGE
+    - /bin/sed -i "s#const BOOKING_URL = '';#const BOOKING_URL = 'https://totalwellness.contentfactoryla.com/';#" ${PAGE}includes/config.php
+    - /bin/rm -f ${PAGE}includes/db.php.bak
