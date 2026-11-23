@@ -75,3 +75,4 @@ function base_url(): string {
 function app_url(string $path = ''): string { return (BOOKING_URL !== '' ? BOOKING_URL : base_url()) . $path; }
 
 function e($s): string { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+require_once __DIR__ . '/i18n.php';

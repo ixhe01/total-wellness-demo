@@ -9,9 +9,10 @@
   const url = new URLSearchParams(location.search);
   const st = { step: 1, location: null, service: null, provider: null, date: null, time: null };
   let M = null; // meta
-  const money = p => +p > 0 ? `from $${(+p).toFixed(0)}` : 'Complimentary / insurance';
+  const B = window.TW_BT || {}, LOC = B.locale || 'en-US';
+  const money = p => +p > 0 ? `${B.from} $${(+p).toFixed(0)}` : B.free;
   const fmtDay = d => new Date(d + 'T12:00:00');
-  const fmtTime = t => { const [h, m] = t.split(':').map(Number); return `${(h % 12) || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
+  const fmtTime = t => { const [h, m] = t.split(':').map(Number); return LOC === 'es-MX' ? `${h}:${String(m).padStart(2, '0')}` : `${(h % 12) || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
 
   function go(n) {
     st.step = n;
@@ -19,15 +20,15 @@
     document.querySelectorAll('#steps li').forEach(li => { const s = +li.dataset.s; li.classList.toggle('is-on', s === n); li.classList.toggle('is-done', s < n); });
     $('#backBtn').hidden = n === 1 || n === 6;
     if (n === 6) $('#summary').classList.add('is-done');
-    if (n > 1) document.querySelector('.booking').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (n > 1) { const y = document.querySelector('.booking__main').getBoundingClientRect().top + scrollY - (innerWidth < 920 ? 80 : 110); scrollTo({ top: y, behavior: 'smooth' }); }
     summary();
   }
   function summary() {
     const L = M.locations.find(l => l.id == st.location), S = M.services.find(s => s.id == st.service);
-    const P = st.provider === 0 ? { name: 'Any available' } : M.providers.find(p => p.id == st.provider);
+    const P = st.provider === 0 ? { name: B.any } : M.providers.find(p => p.id == st.provider);
     const set = (k, v) => $(`#summary [data-k="${k}"]`).textContent = v || '—';
     set('location', L && L.name); set('service', S && `${S.name} · ${S.duration} min`); set('provider', P && P.name);
-    set('when', st.date && st.time ? `${fmtDay(st.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(st.time)}` : '');
+    set('when', st.date && st.time ? `${fmtDay(st.date).toLocaleDateString(LOC, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(st.time)}` : '');
   }
 
   function renderLocations() {
@@ -48,25 +49,25 @@
   }
   function renderProviders() {
     const ps = M.providers.filter(p => p.services.includes(st.service) && p.locations.includes(st.location));
-    $('#provList').innerHTML = `<button class="opt opt--any" data-id="0"><span class="avatar avatar--any">✦</span><strong>Any available</strong><span>Earliest opening</span></button>` +
+    $('#provList').innerHTML = `<button class="opt opt--any" data-id="0"><span class="avatar avatar--any">✦</span><strong>${B.any}</strong><span>${B.earliest}</span></button>` +
       ps.map(p => `<button class="opt" data-id="${p.id}"><span class="avatar" style="background-image:url('${p.photo}')"></span><strong>${p.name}</strong><span>${p.title}</span></button>`).join('');
     $('#provList').onclick = e => { const b = e.target.closest('.opt'); if (!b) return; st.provider = +b.dataset.id; st.date = st.time = null; renderDays(); go(4); };
   }
   async function renderDays() {
-    $('#dayList').innerHTML = '<p class="muted">Loading availability…</p>'; $('#slotList').innerHTML = '';
+    $('#dayList').innerHTML = `<p class="muted">${B.loadingDays}</p>`; $('#slotList').innerHTML = '';
     const days = await api('days', { service_id: st.service, location_id: st.location, provider_id: st.provider || '' });
     $('#dayList').innerHTML = days.map(d => { const dt = fmtDay(d.date);
-      return `<button class="day" data-d="${d.date}" ${d.count ? '' : 'disabled'}><small>${dt.toLocaleDateString('en-US', { weekday: 'short' })}</small><b>${dt.getDate()}</b><small>${dt.toLocaleDateString('en-US', { month: 'short' })}</small></button>`; }).join('');
+      return `<button class="day" data-d="${d.date}" ${d.count ? '' : 'disabled'}><small>${dt.toLocaleDateString(LOC, { weekday: 'short' })}</small><b>${dt.getDate()}</b><small>${dt.toLocaleDateString(LOC, { month: 'short' })}</small></button>`; }).join('');
     $('#dayList').onclick = e => { const b = e.target.closest('.day'); if (!b || b.disabled) return;
       document.querySelectorAll('.day').forEach(x => x.classList.toggle('is-on', x === b)); st.date = b.dataset.d; st.time = null; summary(); renderSlots(); };
-    const first = $('.day:not([disabled])'); if (first) first.click(); else $('#slotList').innerHTML = '<p class="muted">No availability in the next weeks. Please call us.</p>';
+    const first = $('.day:not([disabled])'); if (first) first.click(); else $('#slotList').innerHTML = `<p class="muted">${B.noDays}</p>`;
   }
   async function renderSlots() {
-    $('#slotList').innerHTML = '<p class="muted">Loading times…</p>';
+    $('#slotList').innerHTML = `<p class="muted">${B.loadingTimes}</p>`;
     const slots = await api('slots', { service_id: st.service, location_id: st.location, provider_id: st.provider || '', date: st.date });
-    const groups = { Morning: slots.filter(t => t < '12:00'), Afternoon: slots.filter(t => t >= '12:00') };
+    const groups = { [B.morning]: slots.filter(t => t < '12:00'), [B.afternoon]: slots.filter(t => t >= '12:00') };
     $('#slotList').innerHTML = Object.entries(groups).filter(([, v]) => v.length).map(([k, v]) =>
-      `<h4>${k}</h4><div class="slots__grid">${v.map(t => `<button class="slot" data-t="${t}">${fmtTime(t)}</button>`).join('')}</div>`).join('') || '<p class="muted">No times left on this day.</p>';
+      `<h4>${k}</h4><div class="slots__grid">${v.map(t => `<button class="slot" data-t="${t}">${fmtTime(t)}</button>`).join('')}</div>`).join('') || `<p class="muted">${B.noTimes}</p>`;
     $('#slotList').onclick = e => { const b = e.target.closest('.slot'); if (!b) return; st.time = b.dataset.t; summary(); go(5); };
   }
 
@@ -75,14 +76,14 @@
     const f = e.target, msg = $('.form__msg', f);
     if (!f.reportValidity()) return;
     const data = Object.fromEntries(new FormData(f));
-    const btn = $('button[type=submit]', f); btn.disabled = true; msg.textContent = 'Booking…';
+    const btn = $('button[type=submit]', f); btn.disabled = true; msg.textContent = B.booking;
     try {
-      const r = await api('book', {}, { ...data, service_id: st.service, location_id: st.location, provider_id: st.provider || '', date: st.date, time: st.time });
+      const r = await api('book', {}, { ...data, notes: (window.TW_PROMO ? `[${B.promo}: ${window.TW_PROMO}] ` : '') + (data.notes || ''), service_id: st.service, location_id: st.location, provider_id: st.provider || '', date: st.date, time: st.time });
       const a = r.appointment;
       $('#doneName').textContent = a.name;
-      $('#doneDl').innerHTML = `<dt>Confirmation #</dt><dd>${a.code}</dd><dt>Treatment</dt><dd>${a.service}</dd><dt>With</dt><dd>${a.provider}</dd><dt>When</dt><dd>${a.when}</dd><dt>Where</dt><dd>${a.location} — ${a.address}</dd>`;
+      $('#doneDl').innerHTML = `<dt>${B.code}</dt><dd>${a.code}</dd><dt>${B.treatment}</dt><dd>${a.service}</dd><dt>${B.with}</dt><dd>${a.provider}</dd><dt>${B.when}</dt><dd>${a.when}</dd><dt>${B.where}</dt><dd>${a.location} — ${a.address}</dd>${window.TW_PROMO ? `<dt>${B.promo}</dt><dd>${window.TW_PROMO}</dd>` : ''}`;
       msg.textContent = ''; go(6);
-    } catch (err) { msg.textContent = err.message; if (/taken/.test(err.message)) { go(4); renderSlots(); } }
+    } catch (err) { msg.textContent = err.message; if (/taken|ocup/.test(err.message)) { go(4); renderSlots(); } }
     btn.disabled = false;
   });
   $('#backBtn').onclick = () => go(Math.max(1, st.step - 1));
@@ -91,5 +92,5 @@
     M = m; renderLocations();
     const L = +url.get('location'), S = +url.get('service');
     if (M.locations.length === 1 || L) $(`#locList .opt[data-id="${L || M.locations[0].id}"]`).click();
-  }).catch(() => $('#locList').innerHTML = '<p>Could not load booking data.</p>');
+  }).catch(() => $('#locList').innerHTML = `<p>${B.loadErr}</p>`);
 })();

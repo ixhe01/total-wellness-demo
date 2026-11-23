@@ -26,12 +26,41 @@
   if (lead) lead.addEventListener('submit', async e => {
     e.preventDefault();
     const msg = lead.querySelector('.form__msg'), btn = lead.querySelector('button');
-    btn.disabled = true; msg.textContent = 'Sending…';
+    const T = window.TW_T || {}; btn.disabled = true; msg.textContent = T.sending;
     try {
       const r = await fetch((window.TW_API||'api.php')+'?action=lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(lead))) });
       const j = await r.json(); if (!r.ok) throw new Error(j.error);
-      lead.reset(); msg.textContent = 'Thank you! We’ll be in touch within one business day.'; msg.classList.add('ok');
-    } catch (err) { msg.textContent = err.message || 'Something went wrong. Please call us.'; }
+      lead.reset(); msg.textContent = T.thanks; msg.classList.add('ok');
+    } catch (err) { msg.textContent = err.message || T.error; }
     btn.disabled = false;
   });
+
+  // Pop-up de promoción: aparece una vez (a los 7 s o al 35% de scroll); no vuelve en 7 días si se cierra
+  const promo = document.getElementById('promo');
+  if (promo) {
+    const KEY = 'twc_promo_closed', now = Date.now();
+    let closedAt = 0; try { closedAt = +localStorage.getItem(KEY) || 0; } catch (e) {}
+    const force = /[?&]promo=show/.test(location.search);
+    if (force || now - closedAt > 7 * 864e5) {
+      let shown = false;
+      const show = () => {
+        if (shown || document.body.classList.contains('menu-open')) return; shown = true;
+        promo.hidden = false; requestAnimationFrame(() => promo.classList.add('open'));
+        document.body.classList.add('promo-open');
+        removeEventListener('scroll', onSc);
+        setTimeout(() => promo.querySelector('.promo__x').focus({ preventScroll: true }), 300);
+      };
+      const hide = () => {
+        promo.classList.remove('open'); document.body.classList.remove('promo-open');
+        setTimeout(() => promo.hidden = true, 350);
+        try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+      };
+      const onSc = () => { if (scrollY > (document.body.scrollHeight - innerHeight) * .35) show(); };
+      addEventListener('scroll', onSc, { passive: true });
+      setTimeout(show, force ? 300 : 7000);
+      promo.addEventListener('click', e => { if (e.target.closest('[data-close]')) hide(); });
+      promo.querySelector('.btn').addEventListener('click', () => { try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {} });
+      addEventListener('keydown', e => { if (e.key === 'Escape' && promo.classList.contains('open')) hide(); });
+    }
+  }
 })();
