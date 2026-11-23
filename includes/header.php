@@ -8,6 +8,7 @@ $home = $base . (($is_home ?? false) ? '' : '');
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow"><!-- DEMO: quitar al publicar -->
 <title><?= e($page_title) ?></title>
 <meta name="description" content="Total Wellness Clinic in Van Nuys & Encino: aesthetics, IV therapy, medical weight management and primary care under one roof.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

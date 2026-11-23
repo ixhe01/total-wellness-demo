@@ -16,7 +16,7 @@ $meta = ['csrf' => $_SESSION['csrf'], 'providers' => array_map(fn($p) => $p + ['
          'services' => $services, 'locations' => $locations, 'statuses' => STATUSES, 'today' => $today,
          'ps' => rows('SELECT * FROM provider_services'), 'pl' => rows('SELECT * FROM provider_locations')];
 ?><!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title><?= e($views[$v]) ?> · Total Wellness Staff</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin.css?v=1"><style>:root{--logo:url("<?= e(img('logo_light', 700)) ?>")}</style>
