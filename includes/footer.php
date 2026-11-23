@@ -57,7 +57,7 @@
 </div>
 <?php endif; ?>
 
-<script src="<?= $base ?>assets/js/main.js?v=4"></script>
+<script src="<?= $base ?>assets/js/main.js?v=6"></script>
 <?php if (!empty($extra_js)) foreach ($extra_js as $js) echo '<script src="' . $base . 'assets/js/' . $js . '?v=4"></script>'; ?>
 </body>
 </html>

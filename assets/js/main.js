@@ -35,31 +35,27 @@
     btn.disabled = false;
   });
 
-  // Pop-up de promoción: aparece una vez (a los 7 s o al 35% de scroll); no vuelve en 7 días si se cierra
+  // Pop-up de promoción: aparece 3 s después de entrar, en cada visita nueva (EN y ES).
+  // Si el visitante lo cierra, no vuelve a salir durante esa misma visita.
   const promo = document.getElementById('promo');
   if (promo) {
-    const KEY = 'twc_promo_closed', now = Date.now();
-    let closedAt = 0; try { closedAt = +localStorage.getItem(KEY) || 0; } catch (e) {}
-    const force = /[?&]promo=show/.test(location.search);
-    if (force || now - closedAt > 7 * 864e5) {
-      let shown = false;
+    const KEY = 'twc_promo_seen';
+    let seen = false; try { seen = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
+    if (!seen || /[?&]promo=show/.test(location.search)) {
       const show = () => {
-        if (shown || document.body.classList.contains('menu-open')) return; shown = true;
+        if (document.body.classList.contains('menu-open')) return setTimeout(show, 1500);
         promo.hidden = false; requestAnimationFrame(() => promo.classList.add('open'));
         document.body.classList.add('promo-open');
-        removeEventListener('scroll', onSc);
         setTimeout(() => promo.querySelector('.promo__x').focus({ preventScroll: true }), 300);
       };
       const hide = () => {
         promo.classList.remove('open'); document.body.classList.remove('promo-open');
         setTimeout(() => promo.hidden = true, 350);
-        try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+        try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
       };
-      const onSc = () => { if (scrollY > (document.body.scrollHeight - innerHeight) * .35) show(); };
-      addEventListener('scroll', onSc, { passive: true });
-      setTimeout(show, force ? 300 : 7000);
+      setTimeout(show, 3000);
       promo.addEventListener('click', e => { if (e.target.closest('[data-close]')) hide(); });
-      promo.querySelector('.btn').addEventListener('click', () => { try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {} });
+      promo.querySelector('.btn').addEventListener('click', () => { try { sessionStorage.setItem(KEY, '1'); } catch (e) {} });
       addEventListener('keydown', e => { if (e.key === 'Escape' && promo.classList.contains('open')) hide(); });
     }
   }
